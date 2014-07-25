@@ -54,7 +54,8 @@ namespace NLua
 	public class MetaFunctions
 	{
 		internal LuaNativeFunction gcFunction, indexFunction, newindexFunction, baseIndexFunction,
-			classIndexFunction, classNewindexFunction, execDelegateFunction, callConstructorFunction, toStringFunction, addFunction;
+			classIndexFunction, classNewindexFunction, execDelegateFunction, callConstructorFunction, toStringFunction, 
+            addFunction, subFunction, mulFunction, divFunction;
 		private Dictionary<object, object> memberCache = new Dictionary<object, object> ();
 		private ObjectTranslator translator;
 
@@ -91,6 +92,9 @@ namespace NLua
 			classNewindexFunction = new LuaNativeFunction (MetaFunctions.SetClassFieldOrProperty);
 			execDelegateFunction = new LuaNativeFunction (MetaFunctions.RunFunctionDelegate);
 			addFunction = new LuaNativeFunction (MetaFunctions.AddLua);
+            subFunction = new LuaNativeFunction(MetaFunctions.SubtractLua);
+            mulFunction = new LuaNativeFunction(MetaFunctions.MultiplyLua);
+		    divFunction = new LuaNativeFunction(MetaFunctions.DivideLua);
 		}
 
 		/*
@@ -161,8 +165,9 @@ namespace NLua
 			return 1;
 		}
 
+
 		/*
- * __tostring metafunction of CLR objects.
+ * __add metafunction of CLR objects.
  */
 #if MONOTOUCH
 		[MonoTouch.MonoPInvokeCallback (typeof (LuaNativeFunction))]
@@ -178,6 +183,43 @@ namespace NLua
 			object obj1 = translator.GetRawNetObject (luaState, 1);
 			object obj2 = translator.GetRawNetObject (luaState, 2);
 
+            if (obj1 == null)
+            {
+                switch (LuaLib.LuaType(luaState, 1))
+                {
+                    case LuaTypes.Number:
+                        obj1 = LuaLib.LuaToNumber(luaState, 1);
+                        break;
+                    case LuaTypes.String:
+                        obj1 = LuaLib.LuaToString(luaState, 1);
+                        break;
+                    case LuaTypes.Function:
+                        obj1 = LuaLib.LuaToCFunction(luaState, 1);
+                        break;
+                    case LuaTypes.Boolean:
+                        obj1 = LuaLib.LuaToBoolean(luaState, 1);
+                        break;
+                }
+            }
+            if (obj2 == null)
+            {
+                switch (LuaLib.LuaType(luaState, 2))
+                {
+                    case LuaTypes.Number:
+                        obj1 = LuaLib.LuaToNumber(luaState, 2);
+                        break;
+                    case LuaTypes.String:
+                        obj1 = LuaLib.LuaToString(luaState, 2);
+                        break;
+                    case LuaTypes.Function:
+                        obj1 = LuaLib.LuaToCFunction(luaState, 2);
+                        break;
+                    case LuaTypes.Boolean:
+                        obj1 = LuaLib.LuaToBoolean(luaState, 2);
+                        break;
+                }
+            }
+
 			if (obj1 == null || obj2 == null) {
 				translator.ThrowError (luaState, "Cannot add a nil object");
 				LuaLib.LuaPushNil (luaState);
@@ -185,7 +227,7 @@ namespace NLua
 			}
 
 			Type type = obj1.GetType ();
-			MethodInfo opAddition = type.GetMethod ("op_Addition");
+            MethodInfo opAddition = type.GetMethod("op_Addition", new Type[] { type, obj2.GetType() });
 
 			if (opAddition == null) {
 				translator.ThrowError (luaState, "Cannot add object (" + type.Name+ " does not overload the operator +)");
@@ -196,6 +238,231 @@ namespace NLua
 			translator.Push (luaState, obj1);
 			return 1;
 		}
+
+        /*
+ * __sub metafunction of CLR objects.
+ */
+#if MONOTOUCH
+		[MonoTouch.MonoPInvokeCallback (typeof (LuaNativeFunction))]
+#endif
+        [System.Runtime.InteropServices.AllowReversePInvokeCalls]
+        static int SubtractLua(LuaState luaState)
+        {
+            var translator = ObjectTranslatorPool.Instance.Find(luaState);
+            return SubtractLua(luaState, translator);
+        }
+        static int SubtractLua(LuaState luaState, ObjectTranslator translator)
+        {
+            object obj1 = translator.GetRawNetObject(luaState, 1);
+            object obj2 = translator.GetRawNetObject(luaState, 2);
+
+            if (obj1 == null)
+            {
+                switch (LuaLib.LuaType(luaState, 1))
+                {
+                    case LuaTypes.Number:
+                        obj1 = LuaLib.LuaToNumber(luaState, 1);
+                        break;
+                    case LuaTypes.String:
+                        obj1 = LuaLib.LuaToString(luaState, 1);
+                        break;
+                    case LuaTypes.Function:
+                        obj1 = LuaLib.LuaToCFunction(luaState, 1);
+                        break;
+                    case LuaTypes.Boolean:
+                        obj1 = LuaLib.LuaToBoolean(luaState, 1);
+                        break;
+                }
+            }
+            if (obj2 == null)
+            {
+                switch (LuaLib.LuaType(luaState, 2))
+                {
+                    case LuaTypes.Number:
+                        obj1 = LuaLib.LuaToNumber(luaState, 2);
+                        break;
+                    case LuaTypes.String:
+                        obj1 = LuaLib.LuaToString(luaState, 2);
+                        break;
+                    case LuaTypes.Function:
+                        obj1 = LuaLib.LuaToCFunction(luaState, 2);
+                        break;
+                    case LuaTypes.Boolean:
+                        obj1 = LuaLib.LuaToBoolean(luaState, 2);
+                        break;
+                }
+            }
+
+            if (obj1 == null || obj2 == null)
+            {
+                translator.ThrowError(luaState, "Cannot substract a nil object");
+                LuaLib.LuaPushNil(luaState);
+                return 1;
+            }
+
+            Type type = obj1.GetType();
+            MethodInfo opSubstraction = type.GetMethod("op_Subtraction", new Type[] { type, obj2.GetType() });
+
+            if (opSubstraction == null)
+            {
+                translator.ThrowError(luaState, "Cannot substract object (" + type.Name + " does not overload the operator -)");
+                LuaLib.LuaPushNil(luaState);
+                return 1;
+            }
+            obj1 = opSubstraction.Invoke(obj1, new object[] { obj1, obj2 });
+            translator.Push(luaState, obj1);
+            return 1;
+        }
+
+        /*
+ * __mul metafunction of CLR objects.
+ */
+#if MONOTOUCH
+		[MonoTouch.MonoPInvokeCallback (typeof (LuaNativeFunction))]
+#endif
+        [System.Runtime.InteropServices.AllowReversePInvokeCalls]
+        static int MultiplyLua(LuaState luaState)
+        {
+            var translator = ObjectTranslatorPool.Instance.Find(luaState);
+            return MultiplyLua(luaState, translator);
+        }
+        static int MultiplyLua(LuaState luaState, ObjectTranslator translator)
+        {
+            object obj1 = translator.GetRawNetObject(luaState, 1);
+            object obj2 = translator.GetRawNetObject(luaState, 2);
+
+            if (obj1 == null)
+            {
+                switch (LuaLib.LuaType(luaState, 1))
+                {
+                    case LuaTypes.Number:
+                        obj1 = LuaLib.LuaToNumber(luaState, 1);
+                        break;
+                    case LuaTypes.String:
+                        obj1 = LuaLib.LuaToString(luaState, 1);
+                        break;
+                    case LuaTypes.Function:
+                        obj1 = LuaLib.LuaToCFunction(luaState, 1);
+                        break;
+                    case LuaTypes.Boolean:
+                        obj1 = LuaLib.LuaToBoolean(luaState, 1);
+                        break;
+                }
+            }
+            if (obj2 == null)
+            {
+                switch (LuaLib.LuaType(luaState, 2))
+                {
+                    case LuaTypes.Number:                            
+                        obj2 = LuaLib.LuaToNumber(luaState, 2);
+                        break;
+                    case LuaTypes.String:
+                        obj2 = LuaLib.LuaToString(luaState, 2);
+                        break;
+                    case LuaTypes.Function:
+                        obj2 = LuaLib.LuaToCFunction(luaState, 2);
+                        break;
+                    case LuaTypes.Boolean:
+                        obj2 = LuaLib.LuaToBoolean(luaState, 2);
+                        break;
+                }
+            }
+
+            if (obj1 == null || obj2 == null)
+            {
+                translator.ThrowError(luaState, "Cannot multiply a nil object");
+                LuaLib.LuaPushNil(luaState);
+                return 1;
+            }
+
+            Type type = obj1.GetType();
+            var opMultiply = type.GetMethod("op_Multiply", new Type[]{type, obj2.GetType()});
+
+            if (opMultiply == null)
+            {
+                translator.ThrowError(luaState, "Cannot multiply object (" + type.Name + " does not overload the operator *)");
+                LuaLib.LuaPushNil(luaState);
+                return 1;
+            }
+            obj1 = opMultiply.Invoke(obj1, new object[] { obj1, obj2 });
+            translator.Push(luaState, obj1);
+            return 1;
+        }
+
+        /*
+ * __div metafunction of CLR objects.
+ */
+#if MONOTOUCH
+		[MonoTouch.MonoPInvokeCallback (typeof (LuaNativeFunction))]
+#endif
+        [System.Runtime.InteropServices.AllowReversePInvokeCalls]
+        static int DivideLua(LuaState luaState)
+        {
+            var translator = ObjectTranslatorPool.Instance.Find(luaState);
+            return MultiplyLua(luaState, translator);
+        }
+        static int DivideLua(LuaState luaState, ObjectTranslator translator)
+        {                        
+            object obj1 = translator.GetRawNetObject(luaState, 1);
+            object obj2 = translator.GetRawNetObject(luaState, 2);
+
+            if (obj1 == null)
+            {
+                switch (LuaLib.LuaType(luaState, 1))
+                {
+                    case LuaTypes.Number:
+                        obj1 = LuaLib.LuaToNumber(luaState, 1);
+                        break;
+                    case LuaTypes.String:
+                        obj1 = LuaLib.LuaToString(luaState, 1);
+                        break;
+                    case LuaTypes.Function:
+                        obj1 = LuaLib.LuaToCFunction(luaState, 1);
+                        break;
+                    case LuaTypes.Boolean:
+                        obj1 = LuaLib.LuaToBoolean(luaState,1);
+                        break;                                        
+                }
+            }
+            if (obj2 == null)
+            {
+                switch (LuaLib.LuaType(luaState, 2))
+                {
+                    case LuaTypes.Number:
+                        obj1 = LuaLib.LuaToNumber(luaState, 2);
+                        break;
+                    case LuaTypes.String:
+                        obj1 = LuaLib.LuaToString(luaState, 2);
+                        break;
+                    case LuaTypes.Function:
+                        obj1 = LuaLib.LuaToCFunction(luaState, 2);
+                        break;
+                    case LuaTypes.Boolean:
+                        obj1 = LuaLib.LuaToBoolean(luaState, 2);
+                        break;
+                }
+            }
+
+            if (obj1 == null || obj2 == null)
+            {
+                translator.ThrowError(luaState, "Cannot divide a nil object");
+                LuaLib.LuaPushNil(luaState);
+                return 1;
+            }
+
+            Type type = obj1.GetType();
+            MethodInfo opDivision = type.GetMethod("op_Division", new Type[] {type, obj2.GetType() });
+
+            if (opDivision == null)
+            {
+                translator.ThrowError(luaState, "Cannot divide object (" + type.Name + " does not overload the operator /)");
+                LuaLib.LuaPushNil(luaState);
+                return 1;
+            }
+            obj1 = opDivision.Invoke(obj1, new object[] { obj1, obj2 });
+            translator.Push(luaState, obj1);
+            return 1;
+        }
 
 
 		/// <summary>

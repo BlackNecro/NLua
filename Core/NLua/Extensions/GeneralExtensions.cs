@@ -24,6 +24,8 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 
 namespace NLua.Extensions
 {
@@ -57,14 +59,42 @@ namespace NLua.Extensions
 
 	static class TypeExtensions
 	{
-		public static bool HasAdditionOpertator (this Type t)
+		public static bool HasAdditionOperator (this Type t)
 		{
 			if (t.IsPrimitive) 
 				return true;
 
-			var op_add = t.GetMethod ("op_Addition");
-			return op_add != null;  
-		} 
+			var op_add = t.GetMethods ();
+		    return op_add.Any((x) => x.IsSpecialName && x.Name == "op_Addition");
+		}
+
+        public static bool HasSubtractionOperator (this Type t)
+        {
+            if (t.IsPrimitive)
+                return true;
+
+
+            var op_add = t.GetMethods();
+            return op_add.Any((x) => x.IsSpecialName && x.Name == "op_Subtraction");
+        }
+
+        public static bool HasMultiplyOperator (this Type t)
+        {
+            if (t.IsPrimitive)
+                return true;
+
+            var op_add = t.GetMethods();
+            return op_add.Any((x) => x.IsSpecialName && x.Name == "op_Multiply");
+        }
+
+        public static bool HasDivisionOperator (this Type t)
+        {
+            if (t.IsPrimitive)
+                return true;
+
+            var op_add = t.GetMethods();
+            return op_add.Any((x) => x.IsSpecialName && x.Name == "op_Division");
+        } 
 	}
 
 	static class StringExtensions

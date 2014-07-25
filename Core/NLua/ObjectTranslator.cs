@@ -658,11 +658,36 @@ namespace NLua
 
 		void RegisterOperatorsFunctions (LuaState luaState, Type type)
 		{
-			if (type.HasAdditionOpertator ()) {
+			if (type.HasAdditionOperator ()) {
+                Console.WriteLine("Add operator for " + type.ToString());
 				LuaLib.LuaPushString (luaState, "__add");
 				LuaLib.LuaPushStdCallCFunction (luaState, metaFunctions.addFunction);
 				LuaLib.LuaRawSet (luaState, -3);
+                Console.WriteLine("Finished Add operator for " + type.ToString());
 			}
+            if (type.HasSubtractionOperator())
+            {
+                Console.WriteLine("Sub operator for " + type.ToString());
+                LuaLib.LuaPushString(luaState, "__sub");
+                LuaLib.LuaPushStdCallCFunction(luaState, metaFunctions.subFunction);
+                LuaLib.LuaRawSet(luaState, -3);
+                Console.WriteLine("Finished Sub operator for " + type.ToString());
+            }
+            if (type.HasMultiplyOperator())
+            {
+                Console.WriteLine("Mul operator for " + type.ToString());
+                LuaLib.LuaPushString(luaState, "__mul");
+                LuaLib.LuaPushStdCallCFunction(luaState, metaFunctions.mulFunction);
+                LuaLib.LuaRawSet(luaState, -3);
+                Console.WriteLine("Finished Mul operator for " + type.ToString());
+            }
+            if (type.HasDivisionOperator())
+            {
+                Console.WriteLine("Div operator for " + type.ToString());
+                LuaLib.LuaPushString(luaState, "__div");
+                LuaLib.LuaPushStdCallCFunction(luaState, metaFunctions.divFunction);
+                LuaLib.LuaRawSet(luaState, -3);
+            }
 		}
 
 		/*
